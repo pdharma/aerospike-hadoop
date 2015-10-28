@@ -19,15 +19,11 @@
 package com.aerospike.hadoop.mapreduce;
 
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import com.aerospike.client.policy.Priority;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -42,7 +38,6 @@ import com.aerospike.client.policy.QueryPolicy;
 import com.aerospike.client.policy.ScanPolicy;
 import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.RecordSet;
-import com.aerospike.client.query.ResultSet;
 import com.aerospike.client.query.Statement;
 import com.aerospike.client.Record;
 import com.aerospike.client.ScanCallback;
@@ -67,8 +62,7 @@ public class AerospikeRecordReader
     private ASSCanReader scanReader = null;
     private ASQueryReader queryReader = null;
 
-    private ArrayBlockingQueue<KeyRecPair> queue = 
-        new ArrayBlockingQueue<KeyRecPair>(16 * 1024);
+    private LinkedBlockingQueue<KeyRecPair> queue = new LinkedBlockingQueue<KeyRecPair>();
 
     private boolean isFinished = false;
     private boolean isError = false;
@@ -81,12 +75,11 @@ public class AerospikeRecordReader
     private AerospikeRecord currentValue;
 
     public class CallBack implements ScanCallback {
-        @Override
         public void scanCallback(Key key, Record record)
             throws AerospikeException {
             try {
                 queue.put(new KeyRecPair(new AerospikeKey(key),
-                                         new AerospikeRecord(record)));
+                  new AerospikeRecord(record)));
             } catch (Exception ex) {
                 throw new ScanTerminated(ex);
             }
@@ -121,15 +114,19 @@ public class AerospikeRecordReader
                 log.info(String.format("scanNode %s:%d:%s:%s",
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
+                scanPolicy.timeout = 60000;
+                scanPolicy.maxRetries = 3;
+                scanPolicy.priority = Priority.LOW;
+
                 CallBack cb = new CallBack();
                 log.info("scan starting");
                 isRunning = true;
-                if (binNames != null) 
-                    client.scanNode(scanPolicy, node, namespace, setName,
-                                    cb, binNames);
+
+                if (binNames != null)
+                    client.scanNode(scanPolicy, node, namespace, setName, cb, binNames);
                 else
-                    client.scanNode(scanPolicy, node, namespace, setName,
-                                    cb);
+                    client.scanNode(scanPolicy, node, namespace, setName, cb);
+
                 isFinished = true;
                 log.info("scan finished");
             }
@@ -287,7 +284,7 @@ public class AerospikeRecordReader
     public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
         throws IOException {
 
-        final int waitMSec = 1000;
+        final int waitMSec = 3;
         int trials = 5;
 
         try {
