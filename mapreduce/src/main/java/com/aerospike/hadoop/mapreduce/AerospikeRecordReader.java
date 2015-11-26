@@ -114,6 +114,7 @@ public class AerospikeRecordReader
                 log.info(String.format("scanNode %s:%d:%s:%s",
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
+                scanPolicy.concurrentNodes = true;
                 scanPolicy.timeout = 300000;
                 scanPolicy.maxRetries = 3;
                 scanPolicy.priority = Priority.LOW;
