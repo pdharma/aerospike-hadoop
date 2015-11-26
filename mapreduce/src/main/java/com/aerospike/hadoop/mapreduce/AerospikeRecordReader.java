@@ -114,7 +114,7 @@ public class AerospikeRecordReader
                 log.info(String.format("scanNode %s:%d:%s:%s",
                                        host, port, namespace, setName));
                 ScanPolicy scanPolicy = new ScanPolicy();
-                scanPolicy.timeout = 60000;
+                scanPolicy.timeout = 300000;
                 scanPolicy.maxRetries = 3;
                 scanPolicy.priority = Priority.LOW;
 
@@ -284,7 +284,7 @@ public class AerospikeRecordReader
     public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
         throws IOException {
 
-        final int waitMSec = 3;
+        final int waitMSec = 10;
         int trials = 5;
 
         try {
