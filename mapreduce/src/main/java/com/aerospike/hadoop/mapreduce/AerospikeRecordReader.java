@@ -131,7 +131,7 @@ public class AerospikeRecordReader
                 log.info("scan finished");
             }
             catch (Exception ex) {
-                log.error("exception in ASSCanReader.run: " + ex);
+                //log.error("exception in ASSCanReader.run: " + ex);
                 isError = true;
                 return;
             }
@@ -285,7 +285,7 @@ public class AerospikeRecordReader
         throws IOException {
 
         final int waitMSec = 10;
-        int trials = 5;
+        //int trials = 5;
 
         try {
             KeyRecPair pair;
@@ -299,13 +299,13 @@ public class AerospikeRecordReader
                 }
             
                 if (!isFinished && queue.size() == 0) {
-                    if (trials == 0) {
-                        log.error("SCAN TIMEOUT");
-                        return false;
-                    }
+                    //if (trials == 0) {
+                    //    log.error("SCAN TIMEOUT");
+                    //    return false;
+                    //}
                     log.info("queue empty: waiting...");
                     Thread.sleep(waitMSec);
-                    trials--;
+                    //trials--;
                 } else if (isFinished && queue.size() == 0) {
                     return false;
                 } else if (queue.size() != 0) {
