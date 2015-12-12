@@ -285,7 +285,7 @@ public class AerospikeRecordReader
     public synchronized boolean next(AerospikeKey key, AerospikeRecord value)
         throws IOException {
 
-        final int waitMSec = 10;
+        final int waitMSec = 20;
         //int trials = 5;
 
         try {
